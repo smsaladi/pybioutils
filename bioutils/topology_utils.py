@@ -42,6 +42,14 @@ def c_loop_len(topo):
     """Counts the length of the cterminal loop"""
     return len(topo) - topo.rfind('M')
 
+_re_space = re.compile('\s+')
+_re_nonM = re.compile('[^m]')
+def prep_topo(topo):
+    topo = _re_space.sub('', topo)
+    topo = topo.lower()
+    topo = _re_nonM.sub('x', topo)
+    return topo
+
 def test_first_tmd():
     topo = 'iiiiiiiiMMMMMMMMMMMMMMMMMMMMMooooooooooo'
     assert np.array_equal(_first_tmd(topo), [8, 29])
@@ -68,9 +76,8 @@ def test_first_tmd():
     assert np.array_equal(_first_tmd(topo), [0, 4])
     assert np.array_equal(_first_tmd(topo, 3), [0, 6])
 
-_re_nonM = re.compile('[^M]', re.I)
 def _first_tmd(topo, ext=0):
-    topo = _re_nonM.sub('x', topo.lower())
+    topo = prep_topo(topo)
 
     tmd_start = topo.find('m')
     if tmd_start == -1:
@@ -142,7 +149,7 @@ def test_last_tmd():
 
 def _last_tmd(topo, ext=0):
     """Returns the start and stop indicies of the last TMD"""
-    topo = _re_nonM.sub('x', topo.lower())
+    topo = prep_topo(topo)
 
     tmd_stop = topo.rfind('m') + 1
     if tmd_stop == 0:
