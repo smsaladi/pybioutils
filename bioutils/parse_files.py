@@ -90,24 +90,38 @@ Deal with hmmsearch
 """
 
 def read_hmmsearch_dom(fn):
-    df = pd.read_csv(
-        fn,
-        sep="\s+",
-        header=None,
-        names=[
-            'target name', 'target accession', 'tlen',
+    """Read the output of hmmsearch
+    
+    Since the description field can have anything in it, if it has spaces, pandas croaks.
+    As a result, we have to read the file in a bit of a roundabout way
+    """
+    cols = ['target name', 'target accession', 'tlen',
             'query name', 'query accession', 'qlen',
             'full_E-value', 'full_score', 'full_bias',
             'domain_idx', 'domain_hits',
             'domain_c-Evalue', 'domain_i-Evalue', 'domain_score', 'domain_bias',
             'hmm_from', 'hmm_to', 'ali_from', 'ali_to', 'env_from', 'env_to',
             'accuracy', 'description of target'
-        ],
-        comment='#')
+        ]
+    df = pd.read_csv(fn, sep="^", header=None, comment='#')
+    df = df[0].str.split('\s+', n=len(cols)-1, expand=True)
+    df.columns = cols
     
+    for c in ['full_E-value', 'full_score', 'full_bias',
+              'domain_c-Evalue', 'domain_i-Evalue',
+              'domain_score', 'domain_bias', 'accuracy']:
+        df[c] = df[c].astype(float)
+        
+    for c in ['tlen', 'qlen',
+              'domain_idx', 'domain_hits',
+              'hmm_from', 'hmm_to',
+              'ali_from', 'ali_to',
+              'env_from', 'env_to']:
+        df[c] = df[c].astype(int)
+
     # convert to 0-based indexing
     for c in ['hmm_from', 'ali_from', 'env_from']:
-         df[c] -=1 
+        df[c] -=1
 
     return df
 
