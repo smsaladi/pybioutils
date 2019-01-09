@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from Bio import SeqIO
+import Bio.PDB
 
 def to_fasta(self, fn=None):
     """Monkey patch pd.Series to provide a to_fasta method"""
@@ -301,3 +302,21 @@ def read_horiz(fn):
     
     name = fn.split('/')[-1].split('.')[0]
     return pd.Series({'pred': pred, 'aa': aa, 'conf': conf}, name=name)
+
+
+def read_dssp(fn):
+    """reads output from dssp into a pandas dataframe"""
+    data = Bio.PDB.make_dssp_dict(fn)
+    df = pd.DataFrame.from_dict(data[0], orient='index')
+    df.columns = ['aa', 'ss', 'asa', 'phi', 'psi', 'dssp_idx',
+        'NH-->O_1_relidx', 'NH-->O_1_energy',
+        'O-->NH_1_relidx', 'O-->NH_1_energy',
+        'NH-->O_2_relidx', 'NH-->O_2_energy',
+        'O-->NH_2_relidx', 'O-->NH_2_energy']
+
+    df.drop(columns='dssp_idx', inplace=True)
+    df['resid'] = df.index.str[1].str[1]
+    df.reset_index(drop=True, inplace=True)
+
+    return df
+
