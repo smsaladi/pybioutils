@@ -254,6 +254,11 @@ def read_cdhit(fn):
 
     df['rep'] = df['ident'] == '*'
 
+    if df['ident'].str.contains('/').any():
+        df['strand'] = 1
+        df.loc[df['ident'].str.contains('-/'), 'strand'] = -1
+        df['ident'] = df['ident'].str.replace('[+-]/', '')
+
     df['ident'] = (df['ident'].str.replace('%', '', regex=False)
                               .str.replace('\s', '')
                               .str.replace('*', '100', regex=False)
