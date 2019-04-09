@@ -21,7 +21,7 @@ def filter_non_gapped(aln):
     aln_arr = np.array(aln.apply(list).tolist())
 
     def has_char(x):
-        return np.any(x != '-')
+        return np.any(x != '-') & np.any(x != '.')
     keep_positions = np.apply_along_axis(has_char, 0, aln_arr)
 
     aln_arr = aln_arr[:, keep_positions]
@@ -37,10 +37,10 @@ def format_aln(aln, format):
     """Takes an alignment as a pd.Series
        and returns a string in clustal format
     """
-    
+
     bp_aln = MultipleSeqAlignment([
             SeqRecord(Seq(v), id=k) for k, v in aln.items()
         ])
-    
+
     return bp_aln.format(format)
 
