@@ -16,6 +16,7 @@ import os.path
 import re
 import gzip
 import json
+import functools
 
 import numpy as np
 import pandas as pd
