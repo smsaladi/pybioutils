@@ -24,6 +24,8 @@ import pandas as pd
 from Bio import SeqIO
 import Bio.PDB
 
+from . import hh_reader
+
 def to_fasta(self, fn=None):
     """Monkey patch pd.Series to provide a to_fasta method"""
     if fn:
@@ -87,9 +89,18 @@ def read_uniprot(excel_fn, faa_fn):
 
 """
 
-Deal with hmmsearch
+Deal with hmm-based searching
 
 """
+
+def read_hhr(fn):
+    """Read the output of hh-suite applications
+
+    Just uses their parser (added to this repo for convenience)
+    """
+    hh_data = hh_reader.read_result(fn)
+    return pd.DataFrame.from_dict(hh_data)
+
 
 def read_hmmsearch_dom(fn):
     """Read the output of hmmsearch
