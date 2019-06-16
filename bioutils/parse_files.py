@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from Bio import SeqIO
+from Bio import AlignIO
 import Bio.PDB
 
 from . import hh_reader
@@ -39,16 +40,25 @@ def to_fasta(self, fn=None):
         return str
 pd.Series.to_fasta = to_fasta
 
-
 @classmethod
-def series_seqio(cls, fn, *args, **kwargs):
+def series_seqio(cls, fn, format, **kwargs):
+    if format in SeqIO._FormatToIterator.keys():
+        reader = SeqIO.parse
+    elif format in AlignIO._FormatToIterator.keys():
+        reader = AlignIO.read
+    else:
+        raise ValueError("format {} not recognized by either SeqIO or AlignIO".format(format))
+
     if isinstance(fn, str) and 'gz' in fn:
         with gzip.open(fn, "rt") as fh:
-            seqs = [(r.id, str(r.seq)) for r in SeqIO.parse(fh, *args, **kwargs)]
+            seqs = reader(fh, format, *kwargs)
     else:
-        seqs = [(r.id, str(r.seq)) for r in SeqIO.parse(fn, *args, **kwargs)]
+        seqs = reader(fn, format, *kwargs)
+
+    seqs = [(r.id, str(r.seq)) for r in seqs]
     seqs = list(zip(*seqs))
     seqs = cls(seqs[1], index=seqs[0], name="seq")
+
     return seqs
 pd.Series.from_seqio = series_seqio
 
