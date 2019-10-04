@@ -11,7 +11,17 @@ All code contained herein is licensed under an
 import re
 import itertools
 
-import numba
+try:
+    import numba
+except:
+    print("numba not found. Nothing will be jitted")
+    class numba:
+        @staticmethod
+        def jit(*args, **kwargs):
+            def inner(func):
+                return func
+            return inner
+
 import numpy as np
 # import pandas as pd
 
