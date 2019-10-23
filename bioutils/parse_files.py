@@ -111,10 +111,44 @@ def read_hhr(fn):
     hh_data = hh_reader.read_result(fn)
     return pd.DataFrame.from_dict(hh_data)
 
+def read_hhr_table(fn):
+    """Read the table created part of hhsearch's hhr output
+    
+    Sometimes read_hhr (which uses hh-suite's utilities doesn't work)
+    """
+    # sep is something that shouldn't be in the file
+    df = pd.read_csv(fn, sep="\N{DC1}", header=None, names=["text"])
+    df['fn'] = fn
+    
+    df['text'] = df['text'].str.strip().str.rstrip()
+
+    start = df[df['text'].str.startswith("No Hit")].index[0]
+    end = df[df['text'].str.startswith(">")].index[0]
+
+    df = df.loc[(start + 1):(end - 2)]
+    df.reset_index(drop=True, inplace=True)
+
+    num_cols = ["prob", "e-value", "p-value", "score", "ss", "cols"]
+    intv_cols = ['query_ali', 'template_ali']
+
+    cols = ["No", "hit", *num_cols, *intv_cols, "template_length"]
+    df[cols] = df['text'].str.split(expand=True)
+    df.drop(columns=['No', 'text'], inplace=True)
+
+    df['template_length'] = pd.to_numeric(df['template_length'].str.replace('(', '').str.replace(')', ''), errors="coerce")
+
+    for c in num_cols:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    for c in intv_cols:
+        df[c] = df[c].str.split('-').apply(lambda x: [int(x[0]) - 1, int(x[1])])
+        
+    return df
+
 
 def read_hmmsearch_dom(fn):
     """Read the output of hmmsearch
-    
+
     Since the description field can have anything in it, if it has spaces, pandas croaks.
     As a result, we have to read the file in a bit of a roundabout way
     """
@@ -129,12 +163,12 @@ def read_hmmsearch_dom(fn):
     df = pd.read_csv(fn, sep="^", header=None, comment='#')
     df = df[0].str.split('\s+', n=len(cols)-1, expand=True)
     df.columns = cols
-    
+
     for c in ['full_E-value', 'full_score', 'full_bias',
               'domain_c-Evalue', 'domain_i-Evalue',
               'domain_score', 'domain_bias', 'accuracy']:
         df[c] = df[c].astype(float)
-        
+
     for c in ['tlen', 'qlen',
               'domain_idx', 'domain_hits',
               'hmm_from', 'hmm_to',
@@ -300,10 +334,10 @@ def read_interpro(fn, seqfn=None):
                        header=None,
                        names=['uniprot', 'ipr', 'desc', 'sig', 'start', 'stop'])
     df['start'] -= 1
-    
+
     if seqfn:
         df_seq = pd.Series.from_seqio(seqfn, 'fasta')
-       
+
     df = df.join(df_seq, on="uniprot")
     return df
 
@@ -313,20 +347,20 @@ def read_ss2(fn):
                        names=['idx', 'aa', 'ss3', 'score_c', 'score_h', 'score_e'])
     df['fn'] = fn
     return df
-    
+
 
 def read_horiz(fn):
     with open(fn, "r") as fh:
         lines = [x.strip() for x in fh.readlines()]
-        
+
     conf = [x.replace("Conf: ", "") for x in lines[2::6]]
     pred = [x.replace("Pred: ", "") for x in lines[3::6]]
-    aa   = [x.replace("AA: ", "") for x in lines[4::6]]    
-    
+    aa   = [x.replace("AA: ", "") for x in lines[4::6]]
+
     conf = "".join(conf)
     pred = "".join(pred)
     aa   = "".join(aa)
-    
+
     name = fn.split('/')[-1].split('.')[0]
     return pd.Series({'pred': pred, 'aa': aa, 'conf': conf}, name=name)
 
