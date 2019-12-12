@@ -25,10 +25,6 @@ except:
 import numpy as np
 # import pandas as pd
 
-# from tqdm.autonotebook import tqdm
-from tqdm import tqdm
-tqdm.pandas()
-
 def test_parse_positionwise():
     pass
 
