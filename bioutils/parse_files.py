@@ -41,7 +41,9 @@ def to_fasta(self, fn=None):
 pd.Series.to_fasta = to_fasta
 
 @classmethod
-def series_seqio(cls, fn, format, **kwargs):
+def series_seqio(cls, file, format, **kwargs):
+    """Reads from a file (string or file handle) assuming format specified
+    """
     if format in SeqIO._FormatToIterator.keys():
         reader = SeqIO.parse
     elif format in AlignIO._FormatToIterator.keys():
@@ -49,11 +51,7 @@ def series_seqio(cls, fn, format, **kwargs):
     else:
         raise ValueError("format {} not recognized by either SeqIO or AlignIO".format(format))
 
-    if isinstance(fn, str) and 'gz' in fn:
-        with gzip.open(fn, "rt") as fh:
-            seqs = reader(fh, format, *kwargs)
-    else:
-        seqs = reader(fn, format, *kwargs)
+    seqs = reader(file, format, *kwargs)
 
     seqs = [(r.id, str(r.seq)) for r in seqs]
     seqs = list(zip(*seqs))
