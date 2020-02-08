@@ -7,14 +7,14 @@ All code contained herein is licensed under an
 [MIT License](https://opensource.org/licenses/MIT)
 """
 
-# import sys
+import sys
 import re
 import itertools
 
 try:
     import numba
 except:
-    print("numba not found. Nothing will be jitted")
+    print("numba not found. Nothing will be jitted", file=sys.stderr)
     class numba:
         @staticmethod
         def jit(*args, **kwargs):
